@@ -359,20 +359,16 @@ int main(int argc, char **argv) {
         int fd = -1;
         long r;
 
-        if (!argv[1])
-                return exit_error(ERROR_MISSING_ADDRESS);
-
-        if (strcmp(argv[1], "--help") == 0) {
+        if (!argv[1]) {
                 printf("Usage: %s ADDRESS\n", program_invocation_short_name);
                 printf("\n");
                 printf("Provide a varlink service that exposes the systemd journal on ADDRESS\n");
                 printf("\n");
-                printf("  -h, --help      display this help text and exit\n");
-                printf("\n");
                 printf("Return values:\n");
                 for (unsigned long i = 1; i < ERROR_MAX; i += 1)
                         printf(" %3lu %s\n", i, error_strings[i]);
-                return EXIT_SUCCESS;
+
+                return ERROR_MISSING_ADDRESS;
         }
 
         address = argv[1];
