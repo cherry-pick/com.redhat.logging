@@ -294,13 +294,12 @@ static long io_systemd_journal_monitor(VarlinkServer *server,
                                        uint64_t flags,
                                        void *userdata) {
         int epoll_fd = (int)(unsigned long)userdata;
-        Monitor *monitor;
+        _cleanup_(monitor_freep) Monitor *monitor = NULL;
         _cleanup_(varlink_object_unrefp) VarlinkObject *reply = NULL;
         _cleanup_(varlink_array_unrefp) VarlinkArray *entries = NULL;
         int64_t initial_lines = 10;
         long r;
 
-        /* no _cleanup_ on monitor, it ties itself to life of the call */
         r = monitor_new(&monitor, call, epoll_fd);
         if (r < 0)
                 return r;
@@ -320,12 +319,12 @@ static long io_systemd_journal_monitor(VarlinkServer *server,
         varlink_object_new(&reply);
         varlink_object_set_array(reply, "entries", entries);
 
-        if (flags & VARLINK_CALL_MORE) {
-                return varlink_call_reply(call, reply, VARLINK_REPLY_CONTINUES);
-        } else {
-                monitor_free(monitor);
-                return varlink_call_reply(call, reply, 0);
-        }
+        r = varlink_call_reply(call, reply, flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
+        if (r < 0)
+                return r;
+
+        monitor = NULL;
+        return 0;
 }
 
 static int make_signalfd(void) {
