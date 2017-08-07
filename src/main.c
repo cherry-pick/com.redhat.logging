@@ -306,7 +306,7 @@ static long io_systemd_journal_monitor(VarlinkServer *server,
 
         varlink_object_get_int(parameters, "initial_lines", &initial_lines);
         if (initial_lines < 0)
-                return varlink_call_reply_invalid_parameters(call, "initial_lines", NULL);
+                return varlink_call_reply_invalid_parameter(call, "initial_lines");
 
         r = sd_journal_previous_skip(monitor->journal, initial_lines + 1);
         if (r < 0)
