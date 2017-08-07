@@ -383,7 +383,6 @@ int main(int argc, char **argv) {
         varlink_object_set_string(properties, "git", "https://github.com/varlink/io.systemd.devices");
 
         r = varlink_server_new(&server, address, fd,
-                               "io.systemd.journal",
                                properties,
                                &io_systemd_journal_varlink, 1);
         if (r < 0)
