@@ -288,7 +288,7 @@ static long monitor_dispatch(Monitor *monitor) {
         return varlink_call_reply(monitor->call, reply, VARLINK_REPLY_CONTINUES);
 }
 
-static long io_systemd_journal_monitor(VarlinkServer *server,
+static long io_systemd_journal_monitor(VarlinkService *service,
                                        VarlinkCall *call,
                                        VarlinkObject *parameters,
                                        uint64_t flags,
@@ -350,11 +350,10 @@ static long read_signal(int signal_fd) {
 }
 
 int main(int argc, char **argv) {
-        _cleanup_(varlink_server_freep) VarlinkServer *server = NULL;
+        _cleanup_(varlink_service_freep) VarlinkService *service = NULL;
         const char *address;
         _cleanup_(closep) int epoll_fd = -1;
         _cleanup_(closep) int signal_fd = -1;
-        _cleanup_(varlink_object_unrefp) VarlinkObject *properties = NULL;
         int fd = -1;
         long r;
 
@@ -376,15 +375,7 @@ int main(int argc, char **argv) {
         if (read(3, NULL, 0) == 0)
                 fd = 3;
 
-        r = varlink_object_new(&properties);
-        if (r < 0)
-                return exit_error(ERROR_PANIC);
-
-        varlink_object_set_string(properties, "git", "https://github.com/varlink/io.systemd.devices");
-
-        r = varlink_server_new(&server, address, fd,
-                               properties,
-                               &io_systemd_journal_varlink, 1);
+        r = varlink_service_new(&service, "io.systemd.journal", VERSION, address, fd);
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
@@ -394,13 +385,13 @@ int main(int argc, char **argv) {
 
         epoll_fd = epoll_create(EPOLL_CLOEXEC);
         if (epoll_fd < 0 ||
-            epoll_add(epoll_fd, varlink_server_get_fd(server), server) < 0 ||
+            epoll_add(epoll_fd, varlink_service_get_fd(service), service) < 0 ||
             epoll_add(epoll_fd, signal_fd, NULL) < 0)
                 return exit_error(ERROR_PANIC);
 
-        r = varlink_server_set_method_callback(server, "io.systemd.journal.Monitor",
-                                               io_systemd_journal_monitor,
-                                               (void *)(unsigned long)epoll_fd);
+        r = varlink_service_add_interface(service, io_systemd_journal_varlink,
+                                          "Monitor", io_systemd_journal_monitor, (void *)(unsigned long)epoll_fd,
+                                          NULL);
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
@@ -419,8 +410,8 @@ int main(int argc, char **argv) {
                 if (n == 0)
                         continue;
 
-                if (event.data.ptr == server) {
-                        r = varlink_server_process_events(server);
+                if (event.data.ptr == service) {
+                        r = varlink_service_process_events(service);
                         if (r < 0 && r != -EPIPE)
                                 return exit_error(ERROR_PANIC);
                 } else if (event.data.ptr == NULL) {
