@@ -375,7 +375,13 @@ int main(int argc, char **argv) {
         if (read(3, NULL, 0) == 0)
                 fd = 3;
 
-        r = varlink_service_new(&service, "io.systemd.journal", VERSION, address, fd);
+        r = varlink_service_new(&service,
+                                "systemd",
+                                "Journal",
+                                VERSION,
+                                "https://github.com/varlink/io.systemd.journal",
+                                address,
+                                fd);
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
