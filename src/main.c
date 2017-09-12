@@ -8,7 +8,7 @@
 #include <time.h>
 #include <varlink.h>
 
-#include "io.systemd.journal.varlink.h"
+#include "io.systemd.journal.varlink.c.inc"
 #include "util.h"
 
 enum {
@@ -76,7 +76,7 @@ static long journal_get_string(sd_journal *journal, const char *field, char **st
         if (length < field_length)
                 return -EBADMSG;
 
-        *stringp = strndup(data + field_length, length - field_length);
+        *stringp = strndup((char *)data + field_length, length - field_length);
 
         return 0;
 }
