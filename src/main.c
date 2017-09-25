@@ -171,7 +171,7 @@ static long journal_read_next_entry(sd_journal *journal, VarlinkObject **entryp)
         _cleanup_(freep) char *process = NULL;
         uint64_t usec;
         char timestr[50];
-        int64_t priority;
+        int64_t priority = -1;
         long r;
 
         r = sd_journal_next(journal);
@@ -195,18 +195,16 @@ static long journal_read_next_entry(sd_journal *journal, VarlinkObject **entryp)
                 return r;
 
         r = journal_get_int(journal, "PRIORITY", &priority);
-        if (r < 0)
+        if (r < 0 && r != -ENOENT)
                 return r;
-
-        if (priority < 0 || priority > 7)
-                return -EINVAL;
-
 
         varlink_object_new(&entry);
         varlink_object_set_string(entry, "cursor", cursor);
         varlink_object_set_string(entry, "time", timestr);
         varlink_object_set_string(entry, "message", message);
-        varlink_object_set_string(entry, "priority", priorities[priority]);
+
+        if (priority >= 0 && priority <= 7)
+                varlink_object_set_string(entry, "priority", priorities[priority]);
 
         if (journal_get_string(journal, "SYSLOG_IDENTIFIER", &process) == 0)
                 varlink_object_set_string(entry, "process", process);
