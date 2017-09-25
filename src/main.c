@@ -146,7 +146,6 @@ static long monitor_new(Monitor **monitorp, VarlinkCall *call, int epoll_fd) {
         monitor->epoll_fd = epoll_fd;
 
         monitor->call = varlink_call_ref(call);
-        varlink_call_set_canceled_callback(call, monitor_canceled, monitor);
 
         r = sd_journal_open(&monitor->journal, SD_JOURNAL_LOCAL_ONLY);
         if (r < 0)
@@ -322,6 +321,8 @@ static long io_systemd_journal_monitor(VarlinkService *service,
         r = varlink_call_reply(call, reply, flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
         if (r < 0)
                 return r;
+
+        varlink_call_set_canceled_callback(call, monitor_canceled, monitor);
 
         monitor = NULL;
         return 0;
