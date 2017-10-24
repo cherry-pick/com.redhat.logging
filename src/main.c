@@ -384,6 +384,10 @@ int main(int argc, char **argv) {
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
+        r = varlink_service_set_credentials_mode(service, 0666);
+        if (r < 0)
+                return exit_error(ERROR_PANIC);
+
         signal_fd = make_signalfd();
         if (signal_fd < 0)
                 return exit_error(ERROR_PANIC);
