@@ -388,7 +388,7 @@ int main(int argc, char **argv) {
         if (signal_fd < 0)
                 return exit_error(ERROR_PANIC);
 
-        epoll_fd = epoll_create(EPOLL_CLOEXEC);
+        epoll_fd = epoll_create1(EPOLL_CLOEXEC);
         if (epoll_fd < 0 ||
             epoll_add(epoll_fd, varlink_service_get_fd(service), service) < 0 ||
             epoll_add(epoll_fd, signal_fd, NULL) < 0)
