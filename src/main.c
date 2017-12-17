@@ -229,7 +229,7 @@ static long monitor_read_entries(Monitor *monitor, VarlinkArray **entriesp) {
 
                 r = journal_read_next_entry(monitor->journal, &entry);
                 if (r < 0)
-                        return r;
+                        return -VARLINK_ERROR_PANIC;
 
                 if (r == 0)
                         break;
@@ -244,7 +244,7 @@ static long monitor_read_entries(Monitor *monitor, VarlinkArray **entriesp) {
         if (n_read > 0) {
                 r = sd_journal_get_cursor(monitor->journal, &monitor->cursor);
                 if (r < 0)
-                        return r;
+                        return -VARLINK_ERROR_PANIC;
         }
 
         *entriesp = entries;
@@ -266,11 +266,10 @@ static long monitor_dispatch(Monitor *monitor) {
                 else
                         r = sd_journal_seek_tail(monitor->journal);
                 if (r < 0)
-                        return r;
+                        return -VARLINK_ERROR_PANIC;
 
-        } else if (event != SD_JOURNAL_APPEND) {
+        } else if (event != SD_JOURNAL_APPEND)
                 return 0;
-        }
 
         r = monitor_read_entries(monitor, &entries);
         if (r < 0)
@@ -417,8 +416,17 @@ int main(int argc, char **argv) {
 
                 if (event.data.ptr == service) {
                         r = varlink_service_process_events(service);
-                        if (r < 0 && r != -EPIPE)
-                                return exit_error(ERROR_PANIC);
+                        switch (r) {
+                                case 0:
+                                        break;
+
+                                case -VARLINK_ERROR_PANIC:
+                                        return exit_error(ERROR_PANIC);
+
+                                default:
+                                        fprintf(stderr, "Error processing event: %s\n", varlink_error_string(-r));
+                        }
+
                 } else if (event.data.ptr == NULL) {
                         switch (read_signal(signal_fd)) {
                                 case SIGTERM:
@@ -428,12 +436,21 @@ int main(int argc, char **argv) {
                                 default:
                                         return exit_error(ERROR_PANIC);
                         }
+
                 } else {
                         Monitor *monitor = event.data.ptr;
 
                         r = monitor_dispatch(monitor);
-                        if (r < 0 && r != -EPIPE)
-                                return exit_error(ERROR_PANIC);
+                        switch (r) {
+                                case 0:
+                                        break;
+
+                                case -VARLINK_ERROR_PANIC:
+                                        return exit_error(ERROR_PANIC);
+
+                                default:
+                                        fprintf(stderr, "Error dispatching message: %s\n", varlink_error_string(-r));
+                        }
                 }
         }
 
