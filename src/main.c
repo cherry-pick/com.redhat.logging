@@ -424,7 +424,8 @@ int main(int argc, char **argv) {
                                         return exit_error(ERROR_PANIC);
 
                                 default:
-                                        fprintf(stderr, "Error processing event: %s\n", varlink_error_string(-r));
+                                        if (isatty(STDERR_FILENO))
+                                                fprintf(stderr, "Error processing event: %s\n", varlink_error_string(-r));
                         }
 
                 } else if (event.data.ptr == NULL) {
@@ -449,7 +450,8 @@ int main(int argc, char **argv) {
                                         return exit_error(ERROR_PANIC);
 
                                 default:
-                                        fprintf(stderr, "Error dispatching message: %s\n", varlink_error_string(-r));
+                                        if (isatty(STDERR_FILENO))
+                                                fprintf(stderr, "Error dispatching message: %s\n", varlink_error_string(-r));
                         }
                 }
         }
