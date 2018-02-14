@@ -320,9 +320,10 @@ static long io_systemd_journal_monitor(VarlinkService *service,
                 return r;
 
         if (flags & VARLINK_CALL_MORE) {
-                 varlink_call_set_canceled_callback(call, monitor_canceled, monitor);
+                 varlink_call_set_connection_closed_callback(call, monitor_canceled, monitor);
                  monitor = NULL;
         }
+
         return 0;
 }
 
