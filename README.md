@@ -1,4 +1,4 @@
-io.systemd.journal
+com.redhat.logging
 ==================
 
-A varlink service for the systemd journal.
+A varlink service to read the system log.

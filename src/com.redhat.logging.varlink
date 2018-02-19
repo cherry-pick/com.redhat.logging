@@ -1,6 +1,5 @@
-
 # Query and monitor the log messages of a system.
-interface io.systemd.journal
+interface com.redhat.logging
 
 type Entry (
   cursor: string,

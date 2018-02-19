@@ -1,4 +1,4 @@
-project('io.systemd.journal', 'c',
+project('com.redhat.logging', 'c',
         version : '2',
         license : 'ASL2.0',
         default_options: [

@@ -8,7 +8,7 @@
 #include <time.h>
 #include <varlink.h>
 
-#include "io.systemd.journal.varlink.c.inc"
+#include "com.redhat.logging.varlink.c.inc"
 #include "util.h"
 
 enum {
@@ -284,7 +284,7 @@ static long monitor_dispatch(Monitor *monitor) {
         return varlink_call_reply(monitor->call, reply, VARLINK_REPLY_CONTINUES);
 }
 
-static long io_systemd_journal_monitor(VarlinkService *service,
+static long com_redhat_logging_monitor(VarlinkService *service,
                                        VarlinkCall *call,
                                        VarlinkObject *parameters,
                                        uint64_t flags,
@@ -360,7 +360,7 @@ int main(int argc, char **argv) {
         if (!argv[1]) {
                 printf("Usage: %s ADDRESS\n", program_invocation_short_name);
                 printf("\n");
-                printf("Provide a varlink service that exposes the systemd journal on ADDRESS\n");
+                printf("Provide a varlink service that exposes the system log on ADDRESS\n");
                 printf("\n");
                 printf("Return values:\n");
                 for (unsigned long i = 1; i < ERROR_MAX; i += 1)
@@ -376,10 +376,10 @@ int main(int argc, char **argv) {
                 fd = 3;
 
         r = varlink_service_new(&service,
-                                "systemd",
-                                "Journal",
+                                "Red Hat",
+                                "Logging Interface",
                                 VERSION,
-                                "https://github.com/varlink/io.systemd.journal",
+                                "https://github.com/varlink/com.redhat.logging",
                                 address,
                                 fd);
         if (r < 0)
@@ -395,8 +395,8 @@ int main(int argc, char **argv) {
             epoll_add(epoll_fd, signal_fd, NULL) < 0)
                 return exit_error(ERROR_PANIC);
 
-        r = varlink_service_add_interface(service, io_systemd_journal_varlink,
-                                          "Monitor", io_systemd_journal_monitor, (void *)(unsigned long)epoll_fd,
+        r = varlink_service_add_interface(service, com_redhat_logging_varlink,
+                                          "Monitor", com_redhat_logging_monitor, (void *)(unsigned long)epoll_fd,
                                           NULL);
         if (r < 0)
                 return exit_error(ERROR_PANIC);

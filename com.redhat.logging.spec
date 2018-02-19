@@ -1,7 +1,7 @@
-Name:           io.systemd.journal
+Name:           com.redhat.logging
 Version:        2
 Release:        1%{?dist}
-Summary:        Systemd Journal Interface
+Summary:        System Logging Interface
 License:        ASL2.0
 URL:            https://github.com/varlink/%{name}
 Source0:        https://github.com/varlink/%{name}/archive/%{name}-%{version}.tar.gz
@@ -12,7 +12,7 @@ BuildRequires:  libvarlink-devel
 BuildRequires:  systemd-devel
 
 %description
-Service to access the systemd journal.
+Service to access the system log.
 
 %prep
 %setup -q
@@ -30,8 +30,8 @@ export LC_CTYPE=C.utf8
 
 %files
 %license LICENSE
-%{_bindir}/io.systemd.journal
+%{_bindir}/com.redhat.logging
 
 %changelog
 * Tue Aug 29 2017 <info@varlink.org> 2-1
-- io.systemd.journal 2
+- com.redhat.logging 2
