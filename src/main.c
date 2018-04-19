@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <getopt.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
@@ -320,8 +321,8 @@ static long com_redhat_logging_monitor(VarlinkService *service,
                 return r;
 
         if (flags & VARLINK_CALL_MORE) {
-                 varlink_call_set_connection_closed_callback(call, monitor_canceled, monitor);
-                 monitor = NULL;
+                varlink_call_set_connection_closed_callback(call, monitor_canceled, monitor);
+                monitor = NULL;
         }
 
         return 0;
@@ -351,25 +352,37 @@ static long read_signal(int signal_fd) {
 
 int main(int argc, char **argv) {
         _cleanup_(varlink_service_freep) VarlinkService *service = NULL;
-        const char *address;
         _cleanup_(closep) int epoll_fd = -1;
         _cleanup_(closep) int signal_fd = -1;
+        static const struct option options[] = {
+                { "varlink", required_argument, NULL, 'v' },
+                { "help",    no_argument,       NULL, 'h' },
+                {}
+        };
+        int c;
+        const char *address = NULL;
         int fd = -1;
         long r;
 
-        if (!argv[1]) {
-                printf("Usage: %s ADDRESS\n", program_invocation_short_name);
-                printf("\n");
-                printf("Provide a varlink service that exposes the system log on ADDRESS\n");
-                printf("\n");
-                printf("Return values:\n");
-                for (unsigned long i = 1; i < ERROR_MAX; i += 1)
-                        printf(" %3lu %s\n", i, error_strings[i]);
+        while ((c = getopt_long(argc, argv, ":vh", options, NULL)) >= 0) {
+                switch (c) {
+                        case 'h':
+                                printf("Usage: %s ADDRESS\n", program_invocation_short_name);
+                                printf("\n");
+                                printf("Provide a varlink service that exposes the system log on ADDRESS\n");
+                                printf("\n");
+                                printf("Return values:\n");
+                                for (unsigned long i = 1; i < ERROR_MAX; i += 1)
+                                        printf(" %3lu %s\n", i, error_strings[i]);
+                                return EXIT_SUCCESS;
 
-                return ERROR_MISSING_ADDRESS;
+                        case 'v':
+                                address = optarg;
+                }
         }
 
-        address = argv[1];
+        if (!address)
+                return exit_error(ERROR_MISSING_ADDRESS);
 
         /* An activator passed us our listen socket. */
         if (read(3, NULL, 0) == 0)
